@@ -5,7 +5,19 @@ the org-mode for images that are encrypted AND end with ".gpg" extension.
 
 ## Install and run
 
-To start, add this mandatory line to your config file:
+For installation simply issue this command, it'll download the lisp module
+from this repo directly under the latest stable tag (or replace the tag
+version with `master` for the latest code).
+
+```emacs-lisp
+(let ((file (make-temp-file "" nil ".el")))
+(url-copy-file
+ "https://raw.githubusercontent.com/KeyWeeUsr/org-epa-gpg/1.0.0/org-epa-gpg.el"
+ file t)
+(package-install-file file))
+```
+
+To start, add these mandatory lines to your config file:
 
 ```emacs-lisp
 (require 'org-epa-gpg)

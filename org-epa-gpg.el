@@ -4,7 +4,7 @@
 
 ;; Author: Peter Badida <keyweeusr@gmail.com>
 ;; Keywords: lisp, org, gpg, pgp, epa, encryption, image, inline, patch
-;; Version: 1.0.0
+;; Version: 1.1.0
 ;; Package-Requires: ((emacs "26.1"))
 ;; Homepage: https://github.com/KeyWeeUsr/org-epa-gpg
 
@@ -123,11 +123,12 @@ Argument OLD-FUNC Original function to call.
 Argument FILE path for temporary file.
 Optional argument ARGS Args to forward to the original func."
   (let ((temp-image-ext (org-epa-gpg-get-orig-ext file)))
-    (when (org-epa-gpg-is-epa file)
-      (let ((temp-file (org-epa-gpg-mktmp temp-image-ext)))
-        (org-epa-gpg-log-file temp-file)
-        (epa-decrypt-file file temp-file)
-        (apply old-func temp-file args)))))
+    (if (org-epa-gpg-is-epa file)
+        (let ((temp-file (org-epa-gpg-mktmp temp-image-ext)))
+          (org-epa-gpg-log-file temp-file)
+          (epa-decrypt-file file temp-file)
+          (apply old-func temp-file args))
+      (apply old-func file args))))
 
 (defun org-epa-gpg-dedup-exts()
   "Return unique list of extensions with epa-enabled extension."

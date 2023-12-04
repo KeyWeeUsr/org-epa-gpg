@@ -10,7 +10,7 @@
     (advice-add
      'create-image :override
      (lambda (&rest r) (setq-local old-func-called t)))
-    (org-epa-gpg-patch-org-up)
+    (org-epa-gpg--patch-org-up)
     (create-image "dummy")
     (should old-func-called)))
 

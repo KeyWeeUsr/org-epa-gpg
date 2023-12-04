@@ -4,7 +4,7 @@
 
 ;; Author: Peter Badida <keyweeusr@gmail.com>
 ;; Keywords: lisp, org, gpg, pgp, epa, encryption, image, inline, patch
-;; Version: 1.1.0
+;; Version: 2.0.0
 ;; Package-Requires: ((emacs "26.1"))
 ;; Homepage: https://github.com/KeyWeeUsr/org-epa-gpg
 
@@ -26,9 +26,14 @@
 ;; This is a patch that attempts to fix image inlining (C-c C-x C-v) in
 ;; the org-mode for images that are encrypted AND end with ".gpg" extension.
 ;;
-;; To start, add this mandatory line to your config file:
-;; (require 'org-epa-gpg)
-;; (org-epa-gpg-enable)
+;; To start, add this use-package to your config file to enable it globally:
+;;
+;; (use-package org-epa-gpg
+;;   :ensure t
+;;   :after epa-file
+;;   :config (org-epa-gpg-enable))
+;;
+;; Or use `org-epa-gpg-mode' as buffer-local alternative.
 ;;
 ;; The cleaning of the decrypted content (in /tmp via (make-temp-file) )
 ;; is currently done via patching (org-remove-inline-images) with a custom
@@ -36,12 +41,8 @@
 ;; to multiple standard hooks.
 ;;
 ;; What I attempted to make it less insane:
-;; * return the paths from functions
-;;   -> Lisp/ELisp doesn't return values as a normal programming language,
-;;   such as store first, then do stuff, then return... that's why the manual
-;;   file lookup
 ;; * purge the files right after decrypting and loading
-;;   -> this causes an empty rectangle to be shown in the buffer
+;;   -> this causes an empty rectangle in the buffer with hot-reloading
 ;; * hook to standard hooks such as:
 ;;   * buffer-list-update-hook
 ;;     -> basically kills Emacs by making it frozen due to too many updates
@@ -66,109 +67,139 @@
 ;; * quit-window-hook
 ;; * suspend-hook
 ;; * suspend-resume-hook
+;;
+;; A timer could possibly be added with a very short interval, but it doesn't
+;; seem feasible if the amount of images is more than a few (large Org
+;; documents) due to 1:1 (image:purger) relationship in `list-timers' possibly
+;; hogging Emacs down readability-/resource-wise.  Or at least, if turned on by
+;; default.
 
 ;;; Code:
 
 (require 'org)
 
-(defconst org-epa-gpg-temp-prefix
-  "org-epa-gpg-" "Prefix for temporary decrypted files.")
-(defconst org-epa-gpg-ext
-  "gpg" "Default extension for epa-enabled file.")
+(defgroup org-epa-gpg
+  nil
+  "Customization group for `org-epa-gpg-mode' and friends."
+  :group 'editing
+  :group 'files
+  :group 'data
+  :group 'convenience
+  :group 'org)
 
 (defcustom org-epa-gpg-purge-hook()
   "Hook for purging temporary decrypted content."
   :type 'hook
   :group 'org-epa-gpg)
 
-(defun org-epa-gpg-get-purge-path()
+;; constants
+(defconst org-epa-gpg-temp-prefix
+  "org-epa-gpg-"
+  "Prefix for temporary decrypted files.")
+
+(defconst org-epa-gpg-ext
+  "gpg"
+  "Default extension for epa-enabled file.")
+
+;; local/state variables
+(defvar-local image-file-name-extensions nil
+  "Buffer-local overridden image extensions of `image-file.el'.")
+
+;; private/helper funcs
+(defun org-epa-gpg--get-purge-path()
   "Return path for purging of the decrypted files."
   (concat (temporary-file-directory) org-epa-gpg-temp-prefix "*"))
 
-(defun org-epa-gpg-purge()
-  "Purge temporary files created when decrypting images for `org-mode'."
-  (interactive)
-  (dolist (elem (file-expand-wildcards (org-epa-gpg-get-purge-path)))
-    (delete-file elem)))
-
-(defun org-epa-gpg-replace-epa-ext(file)
+(defun org-epa-gpg--replace-epa-ext(file)
   "Clear .gpg extension from FILE path."
   (replace-regexp-in-string (concat "." org-epa-gpg-ext) "" file))
 
-(defun org-epa-gpg-get-ext(file)
+(defun org-epa-gpg--get-ext(file)
   "Pull image extension from FILE path ending with .gpg."
   (car (last (split-string file "\\."))))
 
-(defun org-epa-gpg-get-orig-ext(file)
+(defun org-epa-gpg--get-orig-ext(file)
   "Pull original extension from FILE path endinf with <ext>.gpg."
-  (org-epa-gpg-get-ext (org-epa-gpg-replace-epa-ext file)))
+  (org-epa-gpg--get-ext (org-epa-gpg--replace-epa-ext file)))
 
-(defun org-epa-gpg-is-epa(file)
-  "Check if FILE is epa-enabled encrypted file by extension."
-  (string-equal (org-epa-gpg-get-ext file) org-epa-gpg-ext))
-
-(defun org-epa-gpg-mktmp(ext)
+(defun org-epa-gpg--mktmp(ext)
   "Create a temp file with a custom extension EXT."
   (make-temp-file org-epa-gpg-temp-prefix nil (concat "." ext)))
 
-(defun org-epa-gpg-log-file(file)
+(defun org-epa-gpg--log-file(file)
   "Log warning about unencrypted content in FILE."
   (message
-   "Created temp file for encrypted content '%s', purge with %s"
+   "org-epa-gpg: Created temp file for encrypted content '%s', purge with %s"
    file 'org-epa-gpg-purge))
 
-(defun org-epa-gpg-patch(old-func file &rest args)
+(defun org-epa-gpg--patch(old-func file &rest args)
   "Patch for image.el/create-image() function.
 Argument OLD-FUNC Original function to call.
 Argument FILE path for temporary file.
 Optional argument ARGS Args to forward to the original func."
-  (let ((temp-image-ext (org-epa-gpg-get-orig-ext file)))
-    (if (org-epa-gpg-is-epa file)
-        (let ((temp-file (org-epa-gpg-mktmp temp-image-ext)))
-          (org-epa-gpg-log-file temp-file)
+  (let ((temp-image-ext (org-epa-gpg--get-orig-ext file)))
+    (if (org-epa-gpg-p file)
+        (let ((temp-file (org-epa-gpg--mktmp temp-image-ext)))
+          (org-epa-gpg--log-file temp-file)
           (epa-decrypt-file file temp-file)
           (apply old-func temp-file args))
       (apply old-func file args))))
 
-(defun org-epa-gpg-dedup-exts()
+(defun org-epa-gpg--dedup-exts()
   "Return unique list of extensions with epa-enabled extension."
   (delete-dups
    (append image-file-name-extensions
            (mapcar (lambda (el) (format "%s.%s" el org-epa-gpg-ext))
                    image-file-name-extensions))))
 
-(defun org-epa-gpg-update-exts()
-  "Update image extensions by their .gpg pairs."
+(defun org-epa-gpg--update-exts()
+  "Update image extensions by their .gpg counterparts."
   (set (make-local-variable 'image-file-name-extensions)
-       (org-epa-gpg-dedup-exts)))
+       (org-epa-gpg--dedup-exts)))
 
-(defun org-epa-gpg-inject-purge(&rest _)
+(defun org-epa-gpg--inject-purge(&rest _)
   "Inject a purge hook after (org-toggle-inline-images)."
   (run-hooks 'org-epa-gpg-purge-hook))
 
-(defun org-epa-gpg-patch-org-up()
+(defun org-epa-gpg--patch-org-up()
   "Set up patches."
   (interactive)
-  (org-epa-gpg-update-exts)
-  (advice-add #'create-image :around #'org-epa-gpg-patch)
-  (advice-add #'org-remove-inline-images :after #'org-epa-gpg-inject-purge))
+  (org-epa-gpg--update-exts)
+  (advice-add #'create-image
+              :around #'org-epa-gpg--patch)
+  (advice-add #'org-remove-inline-images
+              :after #'org-epa-gpg--inject-purge))
 
-(defun org-epa-gpg-patch-org-down()
+(defun org-epa-gpg--patch-org-down()
   "Tear down patches."
   (interactive)
-  (advice-remove #'create-image #'org-epa-gpg-patch)
+  (advice-remove #'create-image #'org-epa-gpg--patch)
   (org-epa-gpg-purge))
 
-(defun org-epa-gpg-patch-org()
-  "Patch `image-file-name-extensions', `create-image', `org-remove-inline-images'."
+(defun org-epa-gpg--patch-org()
+  "Patch Org mode functions and its upstream call.
+- `image-file-name-extensions'
+- `create-image'
+- `org-remove-inline-images'"
   (interactive)
   (if (eq major-mode 'org-mode)
-      (org-epa-gpg-patch-org-up) (org-epa-gpg-patch-org-down)))
+      (org-epa-gpg--patch-org-up) (org-epa-gpg--patch-org-down)))
+
+;; public funcs
+(defun org-epa-gpg-purge()
+  "Purge temporary files created when decrypting images for `org-mode'."
+  (interactive)
+  (dolist (elem (file-expand-wildcards (org-epa-gpg--get-purge-path)))
+    (delete-file elem)))
+
+(defun org-epa-gpg-p(file)
+  "Check if FILE is epa-enabled encrypted file by extension."
+  (string-equal (org-epa-gpg--get-ext file) org-epa-gpg-ext))
 
 (defun org-epa-gpg-enable()
   "Enable inlining encrypted .gpg images via `org-mode-hook'."
   (interactive)
-  (add-hook 'org-mode-hook #'org-epa-gpg-patch-org)
+  (add-hook 'org-mode-hook #'org-epa-gpg--patch-org)
   (add-hook 'after-init-hook #'org-epa-gpg-purge)
   (add-hook 'after-save-hook #'org-epa-gpg-purge)
   (add-hook 'auto-save-hook #'org-epa-gpg-purge)
@@ -184,7 +215,7 @@ Optional argument ARGS Args to forward to the original func."
 (defun org-epa-gpg-disable()
   "Disable inlining encrypted .gpg images via `org-mode-hook'."
   (interactive)
-  (remove-hook 'org-mode-hook #'org-epa-gpg-patch-org)
+  (remove-hook 'org-mode-hook #'org-epa-gpg--patch-org)
   (remove-hook 'after-init-hook #'org-epa-gpg-purge)
   (remove-hook 'after-save-hook #'org-epa-gpg-purge)
   (remove-hook 'auto-save-hook #'org-epa-gpg-purge)
@@ -196,7 +227,16 @@ Optional argument ARGS Args to forward to the original func."
   (remove-hook 'quit-window-hook #'org-epa-gpg-purge)
   (remove-hook 'suspend-hook #'org-epa-gpg-purge)
   (remove-hook 'suspend-resume-hook #'org-epa-gpg-purge)
-  (org-epa-gpg-patch-org-down))
+  (org-epa-gpg--patch-org-down))
+
+(define-minor-mode org-epa-gpg-mode()
+  "Mode for inlining encrypted .gpg images via `org-mode-hook'."
+  :group 'org
+  :group 'org-epa
+  :group 'org-epa-gpg
+  (if org-epa-gpg-mode
+      (org-epa-gpg-enable)
+    (org-epa-gpg-disable)))
 
 (provide 'org-epa-gpg)
 ;;; org-epa-gpg.el ends here

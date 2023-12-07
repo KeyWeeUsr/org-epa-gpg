@@ -34,10 +34,6 @@ to multiple standard hooks.
 ### Attempted
 
 What I attempted to make it less insane:
-* return the paths from functions
-  -> Lisp/ELisp doesn't return values as a normal programming language,
-  such as store first, then do stuff, then return... that's why the manual
-  file lookup
 * purge the files right after decrypting and loading
   -> this causes an empty rectangle to be shown in the buffer
 * hook to standard hooks such as:
@@ -67,3 +63,8 @@ their overall presence too:
 * quit-window-hook
 * suspend-hook
 * suspend-resume-hook
+
+A timer could possibly be added with a very short interval, but it doesn't seem
+feasible if the amount of images is more than a few (large Org documents) due
+to 1:1 (image:purger) relationship in `list-timers' possibly hogging Emacs down
+readability-/resource-wise.  Or at least, if turned on by default.

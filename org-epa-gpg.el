@@ -4,7 +4,7 @@
 
 ;; Author: Peter Badida <keyweeusr@gmail.com>
 ;; Keywords: lisp, org, gpg, pgp, epa, encryption, image, inline, patch
-;; Version: 2.0.0
+;; Version: 2.0.1
 ;; Package-Requires: ((emacs "26.1"))
 ;; Homepage: https://github.com/KeyWeeUsr/org-epa-gpg
 
@@ -229,7 +229,7 @@ Optional argument ARGS Args to forward to the original func."
   (remove-hook 'suspend-resume-hook #'org-epa-gpg-purge)
   (org-epa-gpg--patch-org-down))
 
-(define-minor-mode org-epa-gpg-mode()
+(define-minor-mode org-epa-gpg-mode
   "Mode for inlining encrypted .gpg images via `org-mode-hook'."
   :group 'org
   :group 'org-epa

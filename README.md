@@ -12,7 +12,7 @@ version with `master` for the latest code).
 ```emacs-lisp
 (let ((file (make-temp-file "" nil ".el")))
 (url-copy-file
- "https://raw.githubusercontent.com/KeyWeeUsr/org-epa-gpg/1.0.0/org-epa-gpg.el"
+ "https://raw.githubusercontent.com/KeyWeeUsr/org-epa-gpg/2.0.1/org-epa-gpg.el"
  file t)
 (package-install-file file))
 ```
@@ -20,8 +20,10 @@ version with `master` for the latest code).
 To start, add these mandatory lines to your config file:
 
 ```emacs-lisp
-(require 'org-epa-gpg)
-(org-epa-gpg-enable)
+(use-package org-epa-gpg
+  :ensure t
+  :after epa-file
+  :config (org-epa-gpg-enable))
 ```
 
 ## Notes on purging

@@ -182,7 +182,6 @@ Optional argument ARGS Args to forward to the original func."
 - `image-file-name-extensions'
 - `create-image'
 - `org-remove-inline-images'"
-  (interactive)
   (if (eq major-mode 'org-mode)
       (org-epa-gpg--patch-org-up) (org-epa-gpg--patch-org-down)))
 

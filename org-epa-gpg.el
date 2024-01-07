@@ -1,6 +1,6 @@
 ;;; org-epa-gpg.el --- Patch to enable EasyPG .gpg images in Org mode inline
 
-;; Copyright (C) 2022 Peter Badida
+;; Copyright (C) 2022-2024 Peter Badida
 
 ;; Author: Peter Badida <keyweeusr@gmail.com>
 ;; Keywords: lisp, org, gpg, pgp, epa, encryption, image, inline, patch

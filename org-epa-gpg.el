@@ -101,10 +101,6 @@
   "gpg"
   "Default extension for epa-enabled file.")
 
-;; local/state variables
-(defvar-local image-file-name-extensions nil
-  "Buffer-local overridden image extensions of `image-file.el'.")
-
 ;; private/helper funcs
 (defun org-epa-gpg--get-purge-path ()
   "Return path for purging of the decrypted files."
@@ -152,19 +148,18 @@ Optional argument ARGS Args to forward to the original func."
            (mapcar (lambda (el) (format "%s.%s" el org-epa-gpg-ext))
                    image-file-name-extensions))))
 
-(defun org-epa-gpg--update-exts ()
-  "Update image extensions by their .gpg counterparts."
-  (set (make-local-variable 'image-file-name-extensions)
-       (org-epa-gpg--dedup-exts)))
-
 (defun org-epa-gpg--inject-purge (&rest _)
   "Inject a purge hook after (org-toggle-inline-images)."
   (run-hooks 'org-epa-gpg-purge-hook))
 
 (defun org-epa-gpg--patch-org-up ()
   "Set up patches."
-  (interactive)
-  (org-epa-gpg--update-exts)
+  (advice-add #'image-file-name-regexp
+              :around
+              (lambda (old &optional _)  ; _=func prefix
+                (let ((image-file-name-extensions
+                       (org-epa-gpg--dedup-exts)))
+                  (funcall old))))
   (advice-add #'create-image
               :around #'org-epa-gpg--patch)
   (advice-add #'org-remove-inline-images
@@ -172,7 +167,11 @@ Optional argument ARGS Args to forward to the original func."
 
 (defun org-epa-gpg--patch-org-down ()
   "Tear down patches."
-  (interactive)
+  (advice-remove #'image-file-name-regexp
+                 (lambda (old &optional _)  ; _=func prefix
+                   (let ((image-file-name-extensions
+                          (org-epa-gpg--dedup-exts)))
+                     (funcall old))))
   (advice-remove #'create-image #'org-epa-gpg--patch)
   (org-epa-gpg-purge))
 

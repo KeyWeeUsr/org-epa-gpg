@@ -4,7 +4,7 @@
 
 ;; Author: Peter Badida <keyweeusr@gmail.com>
 ;; Keywords: lisp, org, gpg, pgp, epa, encryption, image, inline, patch
-;; Version: 2.0.1
+;; Version: 2.1.0
 ;; Package-Requires: ((emacs "26.1"))
 ;; Homepage: https://github.com/KeyWeeUsr/org-epa-gpg
 
@@ -250,6 +250,7 @@ Optional argument ARGS Args to forward to the original func."
   :group 'org
   :group 'org-epa
   :group 'org-epa-gpg
+  :lighter " org-epa-gpg"
   (if org-epa-gpg-mode
       (org-epa-gpg-enable)
     (org-epa-gpg-disable)))

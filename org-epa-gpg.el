@@ -217,7 +217,10 @@ Optional argument ARGS Args to forward to the original func."
   (add-hook 'org-epa-gpg-purge-hook #'org-epa-gpg-purge)
   (add-hook 'quit-window-hook #'org-epa-gpg-purge)
   (add-hook 'suspend-hook #'org-epa-gpg-purge)
-  (add-hook 'suspend-resume-hook #'org-epa-gpg-purge))
+  (add-hook 'suspend-resume-hook #'org-epa-gpg-purge)
+
+  ;; hooks up, patch org
+  (org-epa-gpg--patch-org-up))
 
 (defun org-epa-gpg-disable ()
   "Disable inlining encrypted .gpg images via `org-mode-hook'."

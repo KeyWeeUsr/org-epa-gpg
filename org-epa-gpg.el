@@ -229,8 +229,9 @@ Optional argument ARGS Args to forward to the original func."
   (remove-hook 'suspend-resume-hook #'org-epa-gpg-purge)
   (org-epa-gpg--patch-org-down))
 
+;;;###autoload
 (define-minor-mode org-epa-gpg-mode
-  "Mode for inlining encrypted .gpg images via `org-mode-hook'."
+  "Inline encrypted .gpg images via `org-mode-hook' with `epa'."
   :group 'org
   :group 'org-epa
   :group 'org-epa-gpg

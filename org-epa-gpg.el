@@ -173,7 +173,9 @@ Optional argument ARGS Args to forward to the original func."
                           (org-epa-gpg--dedup-exts)))
                      (funcall old))))
   (advice-remove #'create-image #'org-epa-gpg--patch)
-  (org-epa-gpg-purge))
+  (org-epa-gpg-purge)
+  (advice-remove #'org-remove-inline-images
+                 #'org-epa-gpg--inject-purge))
 
 (defun org-epa-gpg--patch-org ()
   "Patch Org mode functions and its upstream call.

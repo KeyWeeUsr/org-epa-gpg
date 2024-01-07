@@ -199,7 +199,14 @@ Optional argument ARGS Args to forward to the original func."
 (defun org-epa-gpg-enable ()
   "Enable inlining encrypted .gpg images via `org-mode-hook'."
   (interactive)
+  ;; explicitly disable, there's no mode to check
+  (add-hook 'kill-buffer-hook #'org-epa-gpg-disable)
+
+  ;; check what mode we're in before patching
+  ;; don't leave patched code when user disables org mode
   (add-hook 'org-mode-hook #'org-epa-gpg--patch-org)
+
+  ;; purge hooks
   (add-hook 'after-init-hook #'org-epa-gpg-purge)
   (add-hook 'after-save-hook #'org-epa-gpg-purge)
   (add-hook 'auto-save-hook #'org-epa-gpg-purge)
@@ -215,7 +222,10 @@ Optional argument ARGS Args to forward to the original func."
 (defun org-epa-gpg-disable ()
   "Disable inlining encrypted .gpg images via `org-mode-hook'."
   (interactive)
+  (remove-hook 'kill-buffer-hook #'org-epa-gpg-disable)
   (remove-hook 'org-mode-hook #'org-epa-gpg--patch-org)
+
+  ;; purge hooks
   (remove-hook 'after-init-hook #'org-epa-gpg-purge)
   (remove-hook 'after-save-hook #'org-epa-gpg-purge)
   (remove-hook 'auto-save-hook #'org-epa-gpg-purge)
@@ -227,6 +237,8 @@ Optional argument ARGS Args to forward to the original func."
   (remove-hook 'quit-window-hook #'org-epa-gpg-purge)
   (remove-hook 'suspend-hook #'org-epa-gpg-purge)
   (remove-hook 'suspend-resume-hook #'org-epa-gpg-purge)
+
+  ;; hooks down, unpatch org
   (org-epa-gpg--patch-org-down))
 
 ;;;###autoload

@@ -87,8 +87,8 @@
   :group 'convenience
   :group 'org)
 
-(defcustom org-epa-gpg-purge-hook()
-  "Hook for purging temporary decrypted content."
+(defcustom org-epa-gpg-purge-hook nil
+  "Temp data purge hook, run after `org-toggle-inline-images'."
   :type 'hook
   :group 'org-epa-gpg)
 

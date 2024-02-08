@@ -73,6 +73,112 @@
       (should-not patched)
       (should purged))))
 
+(ert-deftest org-epa-gpg-local-advices-other-buffer ()
+  (let (stored exts-patched image-patched inline-patched)
+    (with-temp-buffer
+      (push (current-buffer) stored)
+      ;; exts
+      (advice-add #'org-epa-gpg--dedup-exts
+                  :override
+                  (lambda (&rest _) (setq exts-patched t)))
+
+      ;; image
+      (advice-add #'org-epa-gpg--get-orig-ext :override (lambda (&rest _)))
+      (advice-add #'org-epa-gpg-p :override (lambda (&rest _) t))
+      (advice-add #'org-epa-gpg--mktmp :override (lambda (&rest _)))
+      (advice-add #'org-epa-gpg--log-file :override (lambda (&rest _)))
+      (advice-add #'epa-decrypt-file
+                  :override
+                  (lambda (&rest _) (setq image-patched t)))
+
+      ;; inline
+      (advice-add #'run-hooks
+                  :around
+                  (lambda (old-func hook &rest args)
+                    (if (eq 'org-epa-gpg-purge-hook hook)
+                        (setq inline-patched t)
+                      (apply old-func hook args))))
+
+      ;; set up local advices
+      (org-epa-gpg--patch-org-up)
+
+      ;; within same buffer, should work
+      ;; exts
+      (org-epa-gpg--patch-image-exts (lambda ()))
+      (should exts-patched)
+      (setq exts-patched nil)
+
+      ;; image
+      (org-epa-gpg--patch (lambda (&rest _)) "file")
+      (should image-patched)
+      (setq image-patched nil)
+
+      ;; inline
+      (org-remove-inline-images)
+      (should inline-patched)
+      (setq inline-patched nil)
+
+      ;; different buffer, should not work
+      (with-temp-buffer
+        ;; exts
+        (org-epa-gpg--patch-image-exts (lambda ()))
+        (should-not exts-patched)
+
+        ;; image
+        (org-epa-gpg--patch (lambda (&rest _)) "file")
+        (should-not image-patched)
+
+        ;; inline
+        (org-remove-inline-images)
+        (should-not inline-patched)
+
+        (should (string= (format "%s" `((org-inline ,@stored)
+                                        (create-image ,@stored)
+                                        (image-exts ,@stored)))
+                         (format "%s" org-epa-gpg--advices))))
+
+      ;; switch back to previous buffer, should work
+      ;; exts
+      (org-epa-gpg--patch-image-exts (lambda ()))
+      (should exts-patched)
+
+      ;; image
+      (org-epa-gpg--patch (lambda (&rest _)) "file")
+      (should image-patched)
+
+      ;; inline
+      (org-remove-inline-images)
+      (should inline-patched)
+
+      ;; unset local advices
+      (should (string= (format "%s" `((org-inline ,@stored)
+                                      (create-image ,@stored)
+                                      (image-exts ,@stored)))
+                       (format "%s" org-epa-gpg--advices)))
+      (org-epa-gpg--patch-org-down)
+      (should (string= (format "%s" '((org-inline)
+                                      (create-image)
+                                      (image-exts)))
+                       (format "%s" org-epa-gpg--advices))))
+
+    ;; exts
+    (advice-remove #'org-epa-gpg--dedup-exts
+                   (lambda (&rest _) (setq exts-patched t)))
+
+    ;; image
+    (advice-remove #'org-epa-gpg--get-orig-ext (lambda (&rest _)))
+    (advice-remove #'org-epa-gpg-p (lambda (&rest _) t))
+    (advice-remove #'org-epa-gpg--mktmp (lambda (&rest _)))
+    (advice-remove #'org-epa-gpg--log-file (lambda (&rest _)))
+    (advice-remove #'epa-decrypt-file
+                   (lambda (&rest _) (setq image-patched t)))
+
+    ;; inline
+    (advice-remove #'run-hooks
+                   (lambda (old-func hook &rest args)
+                     (if (eq 'org-epa-gpg-purge-hook hook)
+                         (setq inline-patched t)
+                       (apply old-func hook args))))))
 
 (provide 'org-epa-gpg-tests)
 

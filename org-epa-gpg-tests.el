@@ -180,6 +180,23 @@
                          (setq inline-patched t)
                        (apply old-func hook args))))))
 
+(ert-deftest org-epa-gpg-double-patch ()
+  (org-epa-gpg--patch-org-up)
+  (org-epa-gpg--patch-org-up)
+  (org-epa-gpg--patch-org-down)
+  (should (string= (format "%s" '((org-inline)
+                                  (create-image)
+                                  (image-exts)))
+                   (format "%s" org-epa-gpg--advices)))
+  (should-not
+   (advice-member-p #'org-epa-gpg--patch-image-exts
+                    #'image-file-name-regexp))
+  (should-not
+   (advice-member-p #'org-epa-gpg--patch #'create-image))
+  (should-not
+   (advice-member-p #'org-epa-gpg--inject-purge
+                    #'org-remove-inline-images)))
+
 (provide 'org-epa-gpg-tests)
 
 ;;; org-epa-gpg-tests.el ends here

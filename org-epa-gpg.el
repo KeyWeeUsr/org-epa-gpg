@@ -199,38 +199,33 @@ Optional argument ARGS Args to forward to the original func."
   (string-equal (org-epa-gpg--get-ext file) org-epa-gpg-ext))
 
 (defun org-epa-gpg-enable ()
-  "Enable inlining encrypted .gpg images via `org-mode-hook'."
+  "Enable inlining encrypted .gpg images."
   (interactive)
   ;; explicitly disable, there's no mode to check
-  (add-hook 'kill-buffer-hook #'org-epa-gpg-disable)
-
-  ;; check what mode we're in before patching
-  ;; don't leave patched code when user disables org mode
-  (add-hook 'org-mode-hook #'org-epa-gpg--patch-org)
+  (add-hook 'kill-buffer-hook #'org-epa-gpg-disable 0 t)
 
   ;; purge hooks
   (dolist (hook org-epa-gpg-purging-hooks)
-    (add-hook (cadr hook) #'org-epa-gpg-purge))
+    (add-hook (cadr hook) #'org-epa-gpg-purge 0 t))
 
   ;; hooks up, patch org
-  (org-epa-gpg--patch-org-up))
+  (org-epa-gpg--patch-org))
 
 (defun org-epa-gpg-disable ()
-  "Disable inlining encrypted .gpg images via `org-mode-hook'."
+  "Disable inlining encrypted .gpg images."
   (interactive)
-  (remove-hook 'kill-buffer-hook #'org-epa-gpg-disable)
-  (remove-hook 'org-mode-hook #'org-epa-gpg--patch-org)
+  (remove-hook 'kill-buffer-hook #'org-epa-gpg-disable t)
 
   ;; purge hooks
   (dolist (hook org-epa-gpg-purging-hooks)
-    (remove-hook (cadr hook) #'org-epa-gpg-purge))
+    (remove-hook (cadr hook) #'org-epa-gpg-purge t))
 
   ;; hooks down, unpatch org
   (org-epa-gpg--patch-org-down))
 
 ;;;###autoload
 (define-minor-mode org-epa-gpg-mode
-  "Inline encrypted .gpg images via `org-mode-hook' with `epa'."
+  "Inline encrypted .gpg images with `epa'."
   :group 'org
   :group 'org-epa
   :group 'org-epa-gpg

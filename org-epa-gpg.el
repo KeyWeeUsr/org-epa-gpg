@@ -4,7 +4,7 @@
 
 ;; Author: Peter Badida <keyweeusr@gmail.com>
 ;; Keywords: lisp, org, gpg, pgp, epa, encryption, image, inline, patch
-;; Version: 2.1.0
+;; Version: 3.0.0
 ;; Package-Requires: ((emacs "26.1"))
 ;; Homepage: https://github.com/KeyWeeUsr/org-epa-gpg
 
@@ -160,7 +160,9 @@ Optional argument ARGS Args to forward to the original func."
   (when (member (current-buffer) (alist-get 'org-inline org-epa-gpg--advices))
     (run-hooks 'org-epa-gpg-purge-hook)))
 
-(defun org-epa-gpg--patch-image-exts (old &optional _)  ; _=func prefix
+(defun org-epa-gpg--patch-image-exts (old &optional _)
+  "Suffix all `image-file-name-regexp' with `org-epa-gpg-ext'.
+Argument OLD Original `image-file-name-regexp' ref."
   (if (member (current-buffer) (alist-get 'image-exts org-epa-gpg--advices))
       (let ((image-file-name-extensions
              (org-epa-gpg--dedup-exts)))

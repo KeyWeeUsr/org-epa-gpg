@@ -54,19 +54,7 @@
 ;; So I added the purging to these hooks so that an action of "going away"
 ;; from the org buffer or from Emacs alone, which would potentially endanger
 ;; the unencrypted data, would also purge them.  It's also trying to minimize
-;; their overall presence too:
-;; * org-mode-hook
-;; * after-init-hook
-;; * after-save-hook
-;; * auto-save-hook
-;; * desktop-save-hook
-;; * dired-load-hook
-;; * emacs-startup-hook
-;; * find-file-hook
-;; * org-epa-gpg-purge-hook
-;; * quit-window-hook
-;; * suspend-hook
-;; * suspend-resume-hook
+;; their overall presence too `org-epa-gpg-purging-hooks'
 ;;
 ;; A timer could possibly be added with a very short interval, but it doesn't
 ;; seem feasible if the amount of images is more than a few (large Org
@@ -100,6 +88,20 @@
 (defconst org-epa-gpg-ext
   "gpg"
   "Default extension for epa-enabled file.")
+
+(defconst org-epa-gpg-purging-hooks
+  '('after-init-hook
+    'after-save-hook
+    'auto-save-hook
+    'desktop-save-hook
+    'dired-load-hook
+    'emacs-startup-hook
+    'find-file-hook
+    'org-epa-gpg-purge-hook
+    'quit-window-hook
+    'suspend-hook
+    'suspend-resume-hook)
+  "List of hooks which trigger temp data purging function.")
 
 ;; private/helper funcs
 (defun org-epa-gpg--get-purge-path ()
@@ -207,17 +209,8 @@ Optional argument ARGS Args to forward to the original func."
   (add-hook 'org-mode-hook #'org-epa-gpg--patch-org)
 
   ;; purge hooks
-  (add-hook 'after-init-hook #'org-epa-gpg-purge)
-  (add-hook 'after-save-hook #'org-epa-gpg-purge)
-  (add-hook 'auto-save-hook #'org-epa-gpg-purge)
-  (add-hook 'desktop-save-hook #'org-epa-gpg-purge)
-  (add-hook 'dired-load-hook #'org-epa-gpg-purge)
-  (add-hook 'emacs-startup-hook #'org-epa-gpg-purge)
-  (add-hook 'find-file-hook #'org-epa-gpg-purge)
-  (add-hook 'org-epa-gpg-purge-hook #'org-epa-gpg-purge)
-  (add-hook 'quit-window-hook #'org-epa-gpg-purge)
-  (add-hook 'suspend-hook #'org-epa-gpg-purge)
-  (add-hook 'suspend-resume-hook #'org-epa-gpg-purge)
+  (dolist (hook org-epa-gpg-purging-hooks)
+    (add-hook (cadr hook) #'org-epa-gpg-purge))
 
   ;; hooks up, patch org
   (org-epa-gpg--patch-org-up))
@@ -229,17 +222,8 @@ Optional argument ARGS Args to forward to the original func."
   (remove-hook 'org-mode-hook #'org-epa-gpg--patch-org)
 
   ;; purge hooks
-  (remove-hook 'after-init-hook #'org-epa-gpg-purge)
-  (remove-hook 'after-save-hook #'org-epa-gpg-purge)
-  (remove-hook 'auto-save-hook #'org-epa-gpg-purge)
-  (remove-hook 'desktop-save-hook #'org-epa-gpg-purge)
-  (remove-hook 'dired-load-hook #'org-epa-gpg-purge)
-  (remove-hook 'emacs-startup-hook #'org-epa-gpg-purge)
-  (remove-hook 'find-file-hook #'org-epa-gpg-purge)
-  (remove-hook 'org-epa-gpg-purge-hook #'org-epa-gpg-purge)
-  (remove-hook 'quit-window-hook #'org-epa-gpg-purge)
-  (remove-hook 'suspend-hook #'org-epa-gpg-purge)
-  (remove-hook 'suspend-resume-hook #'org-epa-gpg-purge)
+  (dolist (hook org-epa-gpg-purging-hooks)
+    (remove-hook (cadr hook) #'org-epa-gpg-purge))
 
   ;; hooks down, unpatch org
   (org-epa-gpg--patch-org-down))

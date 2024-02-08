@@ -55,6 +55,25 @@
       (should-not patched)
       (should unpatched))))
 
+(ert-deftest org-epa-gpg-unpatch-silently ()
+  (let (patched purged)
+    (with-temp-buffer
+      (fundamental-mode)
+      (advice-add 'org-epa-gpg--patch-org-up
+                  :override
+                  (lambda (&rest) (setq patched t)))
+      (advice-add 'org-epa-gpg-purge
+                  :override
+                  (lambda (&rest) (setq purged t)))
+      (org-epa-gpg--patch-org)
+      (advice-remove 'org-epa-gpg-purge
+                     (lambda (&rest) (setq purged t)))
+      (advice-remove 'org-epa-gpg--patch-org-up
+                     (lambda (&rest) (setq patched t)))
+      (should-not patched)
+      (should purged))))
+
+
 (provide 'org-epa-gpg-tests)
 
 ;;; org-epa-gpg-tests.el ends here

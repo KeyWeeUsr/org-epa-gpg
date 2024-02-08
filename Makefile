@@ -18,7 +18,8 @@ clean:
 
 .PHONY: byte-compile
 byte-compile: \
-	org-epa-gpg.elc
+	org-epa-gpg.elc \
+	org-epa-gpg-tests.elc
 
 .PHONY: test
 test: lint-makefile byte-compile main-tests

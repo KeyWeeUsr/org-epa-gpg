@@ -103,6 +103,9 @@
     'suspend-resume-hook)
   "List of hooks which trigger temp data purging function.")
 
+(defvar org-epa-gpg--advices nil
+  "Tracking for buffer-local advices.")
+
 ;; private/helper funcs
 (defun org-epa-gpg--get-purge-path ()
   "Return path for purging of the decrypted files."
@@ -135,13 +138,15 @@
 Argument OLD-FUNC Original function to call.
 Argument FILE path for temporary file.
 Optional argument ARGS Args to forward to the original func."
-  (let ((temp-image-ext (org-epa-gpg--get-orig-ext file)))
-    (if (org-epa-gpg-p file)
-        (let ((temp-file (org-epa-gpg--mktmp temp-image-ext)))
-          (org-epa-gpg--log-file temp-file)
-          (epa-decrypt-file file temp-file)
-          (apply old-func temp-file args))
-      (apply old-func file args))))
+  (if (member (current-buffer) (alist-get 'create-image org-epa-gpg--advices))
+      (let ((temp-image-ext (org-epa-gpg--get-orig-ext file)))
+        (if (org-epa-gpg-p file)
+            (let ((temp-file (org-epa-gpg--mktmp temp-image-ext)))
+              (org-epa-gpg--log-file temp-file)
+              (epa-decrypt-file file temp-file)
+              (apply old-func temp-file args))
+          (apply old-func file args)))
+    (apply old-func file args)))
 
 (defun org-epa-gpg--dedup-exts ()
   "Return unique list of extensions with epa-enabled extension."
@@ -152,32 +157,51 @@ Optional argument ARGS Args to forward to the original func."
 
 (defun org-epa-gpg--inject-purge (&rest _)
   "Inject a purge hook after (org-toggle-inline-images)."
-  (run-hooks 'org-epa-gpg-purge-hook))
+  (when (member (current-buffer) (alist-get 'org-inline org-epa-gpg--advices))
+    (run-hooks 'org-epa-gpg-purge-hook)))
+
+(defun org-epa-gpg--patch-image-exts (old &optional _)  ; _=func prefix
+  (if (member (current-buffer) (alist-get 'image-exts org-epa-gpg--advices))
+      (let ((image-file-name-extensions
+             (org-epa-gpg--dedup-exts)))
+        (funcall old))
+    (funcall old)))
 
 (defun org-epa-gpg--patch-org-up ()
   "Set up patches."
   (advice-add #'image-file-name-regexp
               :around
-              (lambda (old &optional _)  ; _=func prefix
-                (let ((image-file-name-extensions
-                       (org-epa-gpg--dedup-exts)))
-                  (funcall old))))
+              #'org-epa-gpg--patch-image-exts)
+  (push (current-buffer) (alist-get 'image-exts org-epa-gpg--advices))
+
   (advice-add #'create-image
               :around #'org-epa-gpg--patch)
+  (push (current-buffer) (alist-get 'create-image org-epa-gpg--advices))
+
   (advice-add #'org-remove-inline-images
-              :after #'org-epa-gpg--inject-purge))
+              :after #'org-epa-gpg--inject-purge)
+  (push (current-buffer) (alist-get 'org-inline org-epa-gpg--advices)))
 
 (defun org-epa-gpg--patch-org-down ()
   "Tear down patches."
   (advice-remove #'image-file-name-regexp
-                 (lambda (old &optional _)  ; _=func prefix
-                   (let ((image-file-name-extensions
-                          (org-epa-gpg--dedup-exts)))
-                     (funcall old))))
+                 #'org-epa-gpg--patch-image-exts)
+  (setf (alist-get 'image-exts org-epa-gpg--advices)
+        (remove (current-buffer)
+                (alist-get 'image-exts org-epa-gpg--advices)))
+
   (advice-remove #'create-image #'org-epa-gpg--patch)
+  (setf (alist-get 'create-image org-epa-gpg--advices)
+        (remove (current-buffer)
+                (alist-get 'create-image org-epa-gpg--advices)))
+
   (org-epa-gpg-purge)
+
   (advice-remove #'org-remove-inline-images
-                 #'org-epa-gpg--inject-purge))
+                 #'org-epa-gpg--inject-purge)
+  (setf (alist-get 'org-inline org-epa-gpg--advices)
+        (remove (current-buffer)
+                (alist-get 'org-inline org-epa-gpg--advices))))
 
 (defun org-epa-gpg--patch-org ()
   "Patch Org mode functions and its upstream call.

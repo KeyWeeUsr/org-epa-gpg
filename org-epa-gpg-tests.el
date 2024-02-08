@@ -37,6 +37,24 @@
     (delete-file enc-path)
     (delete-file new-path)))
 
+(ert-deftest org-epa-gpg-unpatch-on-nonorg ()
+  (let (patched unpatched)
+    (with-temp-buffer
+      (fundamental-mode)
+      (advice-add 'org-epa-gpg--patch-org-up
+                  :override
+                  (lambda (&rest) (setq patched t)))
+      (advice-add 'org-epa-gpg--patch-org-down
+                  :override
+                  (lambda (&rest) (setq unpatched t)))
+      (org-epa-gpg--patch-org)
+      (advice-remove 'org-epa-gpg--patch-org-up
+                     (lambda (&rest) (setq patched t)))
+      (advice-remove 'org-epa-gpg--patch-org-down
+                     (lambda (&rest) (setq unpatched t)))
+      (should-not patched)
+      (should unpatched))))
+
 (provide 'org-epa-gpg-tests)
 
 ;;; org-epa-gpg-tests.el ends here

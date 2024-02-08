@@ -1163,6 +1163,118 @@
                                     (image-exts)))
                      (format "%s" org-epa-gpg--advices)))))
 
+(ert-deftest org-epa-gpg-purge-on-quit-window-hook ()
+  (let* ((path "example.base64.png")
+         (enc-path (format "%s.gpg" path))
+         (password "password")
+         (text (format "[[./%s]]" enc-path))
+         patched temp-decrypted)
+    (advice-add 'read-passwd
+                :override
+                (lambda (prompt &optional confirm default) password))
+    (advice-add 'message :override (lambda (&rest _)))
+    (let ((epg-pinentry-mode 'loopback))
+      (epa-encrypt-file path nil))
+    (advice-remove 'message (lambda (&rest _)))
+    (advice-remove 'read-passwd
+                   (lambda (prompt &optional confirm default) password))
+
+    (with-temp-buffer
+      (should (eq (point) 1))
+      (insert text)
+      (should (eq (point) (1+ (length text))))
+      (should (eq (point) (point-max)))
+
+      (goto-char (point-min))
+      (should-not (get-char-property (point-min) 'org-image-overlay))
+      (should-not (get-char-property (1- (point-max)) 'org-image-overlay))
+      (setq temp-decrypted
+            (file-expand-wildcards (concat (temporary-file-directory)
+                                           org-epa-gpg-temp-prefix "*")))
+      (should (eq 0 (length temp-decrypted)))
+
+      (org-mode)
+
+      ;; force drawing overlays by
+      ;; - skipping org.el (when (display-graphic-p))
+      (advice-add 'display-graphic-p :override (lambda (&rest _) t))
+      ;; - preventing C calls in src/frame.c check_window_system()
+      (advice-add 'clear-image-cache :override (lambda (&rest _)))
+      ;; - skipping org.el (when image)
+      (advice-add 'org--create-inline-image :override (lambda (&rest _) t))
+      ;; - preventing C calls in src/frame.c check_window_system()
+      (advice-add 'image-flush :override (lambda (&rest _)))
+
+      ;; no overlay present yet
+      (should-not (get-char-property (point-min) 'org-image-overlay))
+      (should-not (get-char-property (1- (point-max)) 'org-image-overlay))
+      (setq temp-decrypted
+            (file-expand-wildcards (concat (temporary-file-directory)
+                                           org-epa-gpg-temp-prefix "*")))
+      (should (eq 0 (length temp-decrypted)))
+
+      ;; draw overlay, but ignore on paths
+      (org-display-inline-images nil nil)
+
+      ;; overlay still not present, missing exts
+      (should-not (get-char-property (point-min) 'org-image-overlay))
+      (should-not (get-char-property (1- (point-max)) 'org-image-overlay))
+      (setq temp-decrypted
+            (file-expand-wildcards (concat (temporary-file-directory)
+                                           org-epa-gpg-temp-prefix "*")))
+      (should (eq 0 (length temp-decrypted)))
+
+      ;; enable handling encrypted images
+      (org-epa-gpg-mode 1)
+
+      ;; check if proper funcs were called
+      (advice-add 'image-file-name-regexp
+                  :after
+                  (lambda (&rest _) (setq patched t)))
+      (should-not patched)
+
+      ;; noise off
+      (advice-add 'message
+                  :around
+                  (lambda (old-func fmt &rest args)
+                    (unless (or (member enc-path args)
+                                (string-prefix-p "%s..." fmt))
+                      (apply old-func fmt args))))
+      (advice-add 'org-epa-gpg--log-file :override (lambda (&rest _)))
+
+      ;; draw overlay with patched paths
+      (org-display-inline-images nil nil)
+      (advice-remove 'org-epa-gpg--log-file (lambda (&rest _)))
+      (advice-remove 'message
+                     (lambda (old-func fmt &rest args)
+                       (unless (or (member enc-path args)
+                                   (string-prefix-p "%s..." fmt))
+                         (apply old-func fmt args))))
+      (should patched)
+      (advice-remove 'image-file-name-regexp
+                     (lambda (&rest _) (setq patched t)))
+      (delete-file enc-path)
+
+      ;; overlay present
+      (should (get-char-property (point-min) 'org-image-overlay))
+      (should (get-char-property (1- (point-max)) 'org-image-overlay))
+      (setq temp-decrypted
+            (file-expand-wildcards (concat (temporary-file-directory)
+                                           org-epa-gpg-temp-prefix "*")))
+      (should (eq 1 (length temp-decrypted)))
+      (should (file-exists-p (car temp-decrypted)))
+      (run-hooks 'quit-window-hook)
+      (should-not (file-exists-p (car temp-decrypted))))
+
+    (advice-remove 'display-graphic-p (lambda (&rest _) t))
+    (advice-remove 'clear-image-cache (lambda (&rest _)))
+    (advice-remove 'org--create-inline-image (lambda (&rest _) t))
+    (advice-remove 'image-flush (lambda (&rest _)))
+    (should (string= (format "%s" `((org-inline)
+                                    (create-image)
+                                    (image-exts)))
+                     (format "%s" org-epa-gpg--advices)))))
+
 (provide 'org-epa-gpg-tests)
 
 ;;; org-epa-gpg-tests.el ends here

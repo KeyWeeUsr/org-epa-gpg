@@ -214,6 +214,58 @@
    (advice-member-p #'org-epa-gpg--inject-purge
                     #'org-remove-inline-images)))
 
+(ert-deftest org-epa-gpg-autoenable ()
+  (advice-add 'add-hook
+              :around
+              (lambda (old-func hook &rest args)
+                (unless (eq 'after-init-hook hook)
+                  (apply old-func hook args))))
+  (advice-add 'remove-hook
+              :around
+              (lambda (old-func hook &rest args)
+                (unless (eq 'after-init-hook hook)
+                  (apply old-func hook args))))
+  (should (string= (format "%s" nil)
+                   (format "%s" org-epa-gpg--advices)))
+  (add-hook 'org-mode-hook #'org-epa-gpg-mode)
+  (should (string= (format "%s" nil)
+                   (format "%s" org-epa-gpg--advices)))
+  (should-not (and (symbolp org-epa-gpg-mode)
+                   (symbol-value org-epa-gpg-mode)))
+  (with-temp-buffer
+    (should-not (and (symbolp org-epa-gpg-mode)
+                     (symbol-value org-epa-gpg-mode)))
+    (org-mode)
+    (should (and (symbolp org-epa-gpg-mode)
+                 (symbol-value org-epa-gpg-mode)))
+    (kill-buffer (current-buffer))
+    (should (string= (format "%s" `((org-inline)
+                                    (create-image)
+                                    (image-exts)))
+                     (format "%s" org-epa-gpg--advices))))
+  (remove-hook 'org-mode-hook #'org-epa-gpg-mode)
+  (advice-remove 'add-hook
+                 (lambda (old-func hook &rest args)
+                   (unless (eq 'after-init-hook hook)
+                     (apply old-func hook args))))
+  (advice-remove 'remove-hook
+                 (lambda (old-func hook &rest args)
+                   (unless (eq 'after-init-hook hook)
+                     (apply old-func hook args))))
+  (should (string= (format "%s" `((org-inline)
+                                  (create-image)
+                                  (image-exts)))
+                   (format "%s" org-epa-gpg--advices)))
+
+  (should-not
+   (advice-member-p #'org-epa-gpg--patch-image-exts
+                    #'image-file-name-regexp))
+  (should-not
+   (advice-member-p #'org-epa-gpg--patch #'create-image))
+  (should-not
+   (advice-member-p #'org-epa-gpg--inject-purge
+                    #'org-remove-inline-images)))
+
 (provide 'org-epa-gpg-tests)
 
 ;;; org-epa-gpg-tests.el ends here

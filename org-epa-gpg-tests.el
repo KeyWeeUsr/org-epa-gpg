@@ -17,7 +17,7 @@
 
 (ert-deftest org-epa-gpg-encrypt-decrypt ()
   (let* ((epg-pinentry-mode 'loopback)
-         (path "example.base64.png")
+         (path "example.png")
          (enc-path (format "%s.gpg" path))
          (new-path (format "%s.new" path))
          (password "password"))
@@ -268,7 +268,7 @@
 
 ;; pull to single func, find why non-zero exit when used as a func template
 (ert-deftest org-epa-gpg-purge-on-after-init-hook ()
-  (let* ((path "example.base64.png")
+  (let* ((path "example.png")
          (enc-path (format "%s.gpg" path))
          (password "password")
          (text (format "[[./%s]]" enc-path))
@@ -380,7 +380,7 @@
                      (format "%s" org-epa-gpg--advices)))))
 
 (ert-deftest org-epa-gpg-purge-on-after-save-hook ()
-  (let* ((path "example.base64.png")
+  (let* ((path "example.png")
          (enc-path (format "%s.gpg" path))
          (password "password")
          (text (format "[[./%s]]" enc-path))
@@ -492,7 +492,7 @@
                      (format "%s" org-epa-gpg--advices)))))
 
 (ert-deftest org-epa-gpg-purge-on-auto-save-hook ()
-  (let* ((path "example.base64.png")
+  (let* ((path "example.png")
          (enc-path (format "%s.gpg" path))
          (password "password")
          (text (format "[[./%s]]" enc-path))
@@ -604,7 +604,7 @@
                      (format "%s" org-epa-gpg--advices)))))
 
 (ert-deftest org-epa-gpg-purge-on-desktop-save-hook ()
-  (let* ((path "example.base64.png")
+  (let* ((path "example.png")
          (enc-path (format "%s.gpg" path))
          (password "password")
          (text (format "[[./%s]]" enc-path))
@@ -716,7 +716,7 @@
                      (format "%s" org-epa-gpg--advices)))))
 
 (ert-deftest org-epa-gpg-purge-on-dired-load-hook ()
-  (let* ((path "example.base64.png")
+  (let* ((path "example.png")
          (enc-path (format "%s.gpg" path))
          (password "password")
          (text (format "[[./%s]]" enc-path))
@@ -828,7 +828,7 @@
                      (format "%s" org-epa-gpg--advices)))))
 
 (ert-deftest org-epa-gpg-purge-on-emacs-startup-hook ()
-  (let* ((path "example.base64.png")
+  (let* ((path "example.png")
          (enc-path (format "%s.gpg" path))
          (password "password")
          (text (format "[[./%s]]" enc-path))
@@ -940,7 +940,7 @@
                      (format "%s" org-epa-gpg--advices)))))
 
 (ert-deftest org-epa-gpg-purge-on-find-file-hook ()
-  (let* ((path "example.base64.png")
+  (let* ((path "example.png")
          (enc-path (format "%s.gpg" path))
          (password "password")
          (text (format "[[./%s]]" enc-path))
@@ -1052,7 +1052,7 @@
                      (format "%s" org-epa-gpg--advices)))))
 
 (ert-deftest org-epa-gpg-purge-on-org-epa-gpg-purge-hook ()
-  (let* ((path "example.base64.png")
+  (let* ((path "example.png")
          (enc-path (format "%s.gpg" path))
          (password "password")
          (text (format "[[./%s]]" enc-path))
@@ -1164,7 +1164,7 @@
                      (format "%s" org-epa-gpg--advices)))))
 
 (ert-deftest org-epa-gpg-purge-on-quit-window-hook ()
-  (let* ((path "example.base64.png")
+  (let* ((path "example.png")
          (enc-path (format "%s.gpg" path))
          (password "password")
          (text (format "[[./%s]]" enc-path))
@@ -1276,7 +1276,7 @@
                      (format "%s" org-epa-gpg--advices)))))
 
 (ert-deftest org-epa-gpg-purge-on-suspend-hook ()
-  (let* ((path "example.base64.png")
+  (let* ((path "example.png")
          (enc-path (format "%s.gpg" path))
          (password "password")
          (text (format "[[./%s]]" enc-path))
@@ -1388,7 +1388,7 @@
                      (format "%s" org-epa-gpg--advices)))))
 
 (ert-deftest org-epa-gpg-purge-on-suspend-resume-hook ()
-  (let* ((path "example.base64.png")
+  (let* ((path "example.png")
          (enc-path (format "%s.gpg" path))
          (password "password")
          (text (format "[[./%s]]" enc-path))

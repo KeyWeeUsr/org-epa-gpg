@@ -12,7 +12,7 @@ version with `master` for the latest code).
 ```emacs-lisp
 (let ((file (make-temp-file "" nil ".el")))
 (url-copy-file
- "https://raw.githubusercontent.com/KeyWeeUsr/org-epa-gpg/2.0.1/org-epa-gpg.el"
+ "https://raw.githubusercontent.com/KeyWeeUsr/org-epa-gpg/3.0.0/org-epa-gpg.el"
  file t)
 (package-install-file file))
 ```
@@ -51,20 +51,7 @@ What I attempted to make it less insane:
 So I added the purging to these hooks so that an action of "going away"
 from the org buffer or from Emacs alone, which would potentially endanger
 the unencrypted data, would also purge them. It's also trying to minimize
-their overall presence too:
-
-* org-mode-hook
-* after-init-hook
-* after-save-hook
-* auto-save-hook
-* desktop-save-hook
-* dired-load-hook
-* emacs-startup-hook
-* find-file-hook
-* org-epa-gpg-purge-hook
-* quit-window-hook
-* suspend-hook
-* suspend-resume-hook
+their overall presence too `org-epa-gpg-purging-hooks`.
 
 A timer could possibly be added with a very short interval, but it doesn't seem
 feasible if the amount of images is more than a few (large Org documents) due

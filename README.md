@@ -1,4 +1,9 @@
 # org-epa-gpg
+[![MELPA][melpa-badge]][melpa-package]
+[![MELPA Stable][melpa-stable-badge]][melpa-stable-package]
+[![Buy me a coffee][bmc-badge]][bmc-link]
+[![Liberapay][lp-badge]][lp-link]
+[![PayPal][ppl-badge]][ppl-link]
 
 This is a patch that attempts to fix image inlining (C-c C-x C-v) in
 the org-mode for images that are encrypted AND end with ".gpg" extension.
@@ -57,3 +62,14 @@ A timer could possibly be added with a very short interval, but it doesn't seem
 feasible if the amount of images is more than a few (large Org documents) due
 to 1:1 (image:purger) relationship in `list-timers' possibly hogging Emacs down
 readability-/resource-wise.  Or at least, if turned on by default.
+
+[melpa-badge]: http://melpa.org/packages/org-epa-gpg-badge.svg
+[melpa-package]: http://melpa.org/#/org-epa-gpg
+[melpa-stable-badge]: http://stable.melpa.org/packages/org-epa-gpg-badge.svg
+[melpa-stable-package]: http://stable.melpa.org/#/org-epa-gpg
+[bmc-badge]: https://img.shields.io/badge/-buy_me_a%C2%A0coffee-gray?logo=buy-me-a-coffee
+[bmc-link]: https://www.buymeacoffee.com/peterbadida
+[ppl-badge]: https://img.shields.io/badge/-paypal-grey?logo=paypal
+[ppl-link]: https://paypal.me/peterbadida
+[lp-badge]: https://img.shields.io/badge/-liberapay-grey?logo=liberapay
+[lp-link]: https://liberapay.com/keyweeusr

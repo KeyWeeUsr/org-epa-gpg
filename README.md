@@ -8,19 +8,10 @@
 This is a patch that attempts to fix image inlining (C-c C-x C-v) in
 the org-mode for images that are encrypted AND end with ".gpg" extension.
 
-## Install and run
+## How to
 
-For installation simply issue this command, it'll download the lisp module
-from this repo directly under the latest stable tag (or replace the tag
-version with `master` for the latest code).
-
-```emacs-lisp
-(let ((file (make-temp-file "" nil ".el")))
-(url-copy-file
- "https://raw.githubusercontent.com/KeyWeeUsr/org-epa-gpg/3.0.0/org-epa-gpg.el"
- file t)
-(package-install-file file))
-```
+Install it from [Melpa](https://melpa.org/#/getting-started) or clone and
+install manually.
 
 To start, add these mandatory lines to your config file:
 

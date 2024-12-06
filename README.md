@@ -1,6 +1,8 @@
 # org-epa-gpg
 [![MELPA][melpa-badge]][melpa-package]
 [![MELPA Stable][melpa-stable-badge]][melpa-stable-package]
+[![CI][ci-badge]][ci-workflow]
+[![Coverage Status][cover-badge]][cover-link]
 [![Buy me a coffee][bmc-badge]][bmc-link]
 [![Liberapay][lp-badge]][lp-link]
 [![PayPal][ppl-badge]][ppl-link]
@@ -64,3 +66,7 @@ readability-/resource-wise.  Or at least, if turned on by default.
 [ppl-link]: https://paypal.me/peterbadida
 [lp-badge]: https://img.shields.io/badge/-liberapay-grey?logo=liberapay
 [lp-link]: https://liberapay.com/keyweeusr
+[ci-badge]: https://github.com/KeyWeeUsr/org-epa-gpg/actions/workflows/test.yml/badge.svg
+[ci-workflow]: https://github.com/KeyWeeUsr/org-epa-gpg/actions/workflows/test.yml
+[cover-badge]: https://coveralls.io/repos/github/KeyWeeUsr/org-epa-gpg/badge.svg?branch=master
+[cover-link]: https://coveralls.io/github/KeyWeeUsr/org-epa-gpg?branch=master
